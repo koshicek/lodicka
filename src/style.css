@@ -1,0 +1,145 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  overflow: hidden;
+  background: #0a4a7a;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+canvas {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* HUD */
+#hud {
+  position: fixed;
+  top: 12px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  pointer-events: none;
+  z-index: 10;
+}
+#hud.hidden { display: none; }
+
+#lives {
+  font-size: 28px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+
+#score {
+  font-size: 32px;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+#speed-label {
+  font-size: 28px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+
+/* Effect toast */
+#effect-label {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.4);
+  padding: 6px 18px;
+  border-radius: 20px;
+  pointer-events: none;
+  z-index: 20;
+  transition: opacity 0.3s;
+}
+#effect-label.hidden { opacity: 0; }
+
+/* Screens */
+#start-screen, #game-over-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #0a4a7a 0%, #1a7ab5 50%, #2aa5d4 100%);
+  z-index: 100;
+  gap: 16px;
+}
+#start-screen.hidden, #game-over-screen.hidden {
+  display: none;
+}
+
+.title {
+  font-size: clamp(36px, 8vw, 72px);
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  animation: bob 2s ease-in-out infinite;
+}
+
+.subtitle {
+  font-size: clamp(18px, 4vw, 28px);
+  color: #b3e0ff;
+  font-weight: 600;
+}
+
+.instructions {
+  color: #d0eaff;
+  font-size: clamp(14px, 3vw, 18px);
+  text-align: center;
+  line-height: 1.8;
+  margin-top: 8px;
+}
+
+button {
+  font-size: clamp(24px, 5vw, 36px);
+  font-weight: 800;
+  padding: 16px 48px;
+  border: none;
+  border-radius: 50px;
+  background: linear-gradient(135deg, #ff6b35, #ff9a56);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(255,107,53,0.5);
+  transition: transform 0.15s, box-shadow 0.15s;
+  margin-top: 12px;
+}
+button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 28px rgba(255,107,53,0.6);
+}
+button:active {
+  transform: scale(0.97);
+}
+
+#final-score, #high-score {
+  font-size: clamp(20px, 4vw, 32px);
+  color: #fff;
+  font-weight: 700;
+}
+#high-score {
+  font-size: clamp(16px, 3vw, 22px);
+  color: #ffd700;
+}
+
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}

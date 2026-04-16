@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Lodicka — Boat Adventure!</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛵</text></svg>">
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <canvas id="game"></canvas>
+    <div id="hud" class="hidden">
+      <div id="lives"></div>
+      <div id="score">0</div>
+      <div id="speed-label">🐌</div>
+    </div>
+    <div id="effect-label" class="hidden"></div>
+    <div id="start-screen">
+      <div class="title">⛵ LODICKA ⛵</div>
+      <div class="subtitle">Boat Adventure!</div>
+      <button id="start-btn">▶ PLAY!</button>
+      <div class="instructions">
+        <p>⬅️ ➡️ Arrow keys or touch to steer</p>
+        <p>Dodge bad stuff! Collect stars! ⭐</p>
+      </div>
+    </div>
+    <div id="game-over-screen" class="hidden">
+      <div class="title">🌊 SPLASH! 🌊</div>
+      <div id="final-score"></div>
+      <div id="high-score"></div>
+      <button id="restart-btn">🔄 Play Again!</button>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
