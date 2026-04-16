@@ -67,7 +67,7 @@ const BOAT_SIZE = 44;
 const OBSTACLE_SIZE = 38;
 const SPAWN_INTERVAL_BASE = 900; // ms
 const SPAWN_INTERVAL_MIN = 350;
-const ISLAND_SPAWN_RATE = 2500;
+const ISLAND_SPAWN_RATE = 1400;
 const INVINCIBLE_DURATION = 1500;
 const EFFECT_DURATION = 3000;
 
@@ -184,7 +184,11 @@ let obstacles = [];
 let islands = [];
 let particles = [];
 let wakeParticles = [];
+let bowWaves = [];
 let ripples = [];
+
+// Boat tilt tracking
+let boatTilt = 0; // smoothed tilt angle for steering direction
 
 // Input
 let keys = {};
@@ -255,8 +259,10 @@ function startGame() {
   islands = [];
   particles = [];
   wakeParticles = [];
+  bowWaves = [];
   ripples = [];
   activeEffects = {};
+  boatTilt = 0;
   Object.values(effectTimeouts).forEach(clearTimeout);
   effectTimeouts = {};
   boat.x = W / 2;
@@ -417,13 +423,29 @@ function spawnObstacle() {
   });
 }
 
+const ISLAND_DECORATIONS = ['🌴', '🌴🌴', '🏠', '🏡', '🏘️', '⛪', '🏰', '🌴🏠', '🏠🌴', '🌲🏡', '🏠🏠'];
+
 function spawnIsland() {
   const side = Math.random() > 0.5 ? 'left' : 'right';
-  const size = 40 + Math.random() * 60;
+  // Islands are now much bigger and more varied
+  const size = 60 + Math.random() * 120;
   const x = side === 'left'
-    ? -size * 0.3 + Math.random() * 30
-    : W - size * 0.7 - Math.random() * 30;
-  islands.push({ x, y: -size, w: size * 1.5, h: size, side });
+    ? -size * 0.2 + Math.random() * 40
+    : W - size * 0.8 - Math.random() * 40;
+  const deco = ISLAND_DECORATIONS[Math.floor(Math.random() * ISLAND_DECORATIONS.length)];
+  // Some islands can also appear mid-water (not just edges)
+  const midWater = Math.random() < 0.25;
+  const finalX = midWater
+    ? LANE_PADDING + Math.random() * (W - LANE_PADDING * 2) - size * 0.5
+    : x;
+  islands.push({
+    x: finalX, y: -size * 1.2,
+    w: size * 1.6, h: size * 1.1,
+    side, deco,
+    hasBeach: Math.random() > 0.3,
+    hasDock: Math.random() > 0.7,
+    treeCount: Math.floor(Math.random() * 3) + 1,
+  });
 }
 
 // ============================================================
@@ -468,12 +490,15 @@ function update(dt) {
   boat.x += moveDir * lateralSpeed;
   boat.x = Math.max(LANE_PADDING, Math.min(W - LANE_PADDING, boat.x));
 
-  // Spin effect
+  // Boat tilt — face the direction it's steering
+  const targetTilt = moveDir * 0.35; // max ~20 degrees
+  boatTilt += (targetTilt - boatTilt) * 0.1; // smooth interpolation
+
+  // Spin effect overrides tilt
   if (activeEffects.spin) {
     boat.angle += 0.15;
   } else {
-    boat.angle *= 0.9;
-    if (Math.abs(boat.angle) < 0.01) boat.angle = 0;
+    boat.angle = boatTilt;
   }
 
   // Float effect (boat bobs up)
@@ -528,15 +553,42 @@ function update(dt) {
     if (islands[i].y > H + 100) islands.splice(i, 1);
   }
 
-  // Wake particles
-  if (Math.random() < 0.4) {
+  // Wake particles (behind the boat)
+  if (Math.random() < 0.5) {
     wakeParticles.push({
-      x: boat.x + (Math.random() - 0.5) * 20 * boat.scale,
-      y: boat.y + boat.h * boat.scale * 0.4,
+      x: boat.x + (Math.random() - 0.5) * 16 * boat.scale,
+      y: boat.y + boat.h * boat.scale * 0.45,
       vx: (Math.random() - 0.5) * 1.5,
       vy: Math.random() * 1.5 + 0.5,
       life: 1,
       size: Math.random() * 4 + 2,
+    });
+  }
+
+  // Bow waves — V-shaped waves spreading from the front of the boat
+  if (Math.random() < 0.6) {
+    const spread = (Math.random() > 0.5 ? 1 : -1);
+    bowWaves.push({
+      x: boat.x + spread * 8 * boat.scale,
+      y: boat.y - boat.h * boat.scale * 0.3,
+      vx: spread * (1.5 + speedMult * 0.5),
+      vy: 0.8 + Math.random() * 0.5,
+      life: 1,
+      size: Math.random() * 6 + 4,
+      type: 'arc',
+    });
+  }
+  // Side splash waves
+  if (Math.random() < 0.3) {
+    const side = Math.random() > 0.5 ? 1 : -1;
+    bowWaves.push({
+      x: boat.x + side * boat.w * boat.scale * 0.4,
+      y: boat.y,
+      vx: side * (2 + speedMult * 0.3),
+      vy: Math.random() * 0.8,
+      life: 1,
+      size: Math.random() * 3 + 2,
+      type: 'splash',
     });
   }
 
@@ -547,6 +599,16 @@ function update(dt) {
     p.y += p.vy;
     p.life -= 0.025;
     if (p.life <= 0) wakeParticles.splice(i, 1);
+  }
+
+  // Update bow waves
+  for (let i = bowWaves.length - 1; i >= 0; i--) {
+    const w = bowWaves[i];
+    w.x += w.vx;
+    w.y += w.vy;
+    w.size += 0.15;
+    w.life -= 0.02;
+    if (w.life <= 0) bowWaves.splice(i, 1);
   }
 
   // Update particles
@@ -623,24 +685,79 @@ function draw() {
 
   // Islands
   for (const island of islands) {
-    // Sand
+    const cx = island.x + island.w / 2;
+    const cy = island.y + island.h / 2;
+
+    // Water ring / shallow water around island
+    ctx.fillStyle = 'rgba(40, 180, 220, 0.3)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, island.w / 2 + 12, island.h / 2 + 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Beach / sand base
+    if (island.hasBeach) {
+      ctx.fillStyle = '#e8d48b';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + 4, island.w / 2 + 4, island.h / 2 + 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Main island (sand)
     ctx.fillStyle = '#d4b96a';
     ctx.beginPath();
-    ctx.ellipse(island.x + island.w / 2, island.y + island.h / 2, island.w / 2, island.h / 2, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, cy, island.w / 2, island.h / 2, 0, 0, Math.PI * 2);
     ctx.fill();
-    // Green
+
+    // Green area
     ctx.fillStyle = '#3a8a3a';
     ctx.beginPath();
-    ctx.ellipse(island.x + island.w / 2, island.y + island.h / 2 - 5, island.w * 0.35, island.h * 0.35, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, cy - 6, island.w * 0.38, island.h * 0.38, 0, 0, Math.PI * 2);
     ctx.fill();
-    // Palm tree emoji
-    ctx.font = `${island.h * 0.5}px serif`;
+
+    // Darker green patch
+    ctx.fillStyle = '#2d7a2d';
+    ctx.beginPath();
+    ctx.ellipse(cx - island.w * 0.1, cy - 10, island.w * 0.2, island.h * 0.22, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Dock
+    if (island.hasDock) {
+      const dockX = cx + island.w * 0.3;
+      const dockY = cy + island.h * 0.35;
+      ctx.fillStyle = '#8B6914';
+      ctx.fillRect(dockX - 3, dockY, 6, 20);
+      ctx.fillRect(dockX - 10, dockY + 16, 20, 4);
+    }
+
+    // Decorations (houses, trees, etc.)
+    const emojiSize = Math.max(16, island.h * 0.35);
+    ctx.font = `${emojiSize}px serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('🌴', island.x + island.w / 2, island.y + island.h / 2 - 5);
+    ctx.fillText(island.deco, cx, cy - 8);
   }
 
-  // Wake particles
+  // Bow waves (V-shape from boat front)
+  for (const w of bowWaves) {
+    ctx.globalAlpha = w.life * 0.45;
+    if (w.type === 'arc') {
+      // Arc-shaped wave crests
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = w.life * 2.5;
+      ctx.beginPath();
+      ctx.arc(w.x, w.y, w.size, 0, Math.PI * 0.6);
+      ctx.stroke();
+    } else {
+      // Splash dots
+      ctx.fillStyle = 'rgba(200, 230, 255, 0.8)';
+      ctx.beginPath();
+      ctx.arc(w.x, w.y, w.size * w.life, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.globalAlpha = 1;
+
+  // Wake particles (behind boat)
   for (const p of wakeParticles) {
     ctx.globalAlpha = p.life * 0.6;
     ctx.fillStyle = '#fff';
