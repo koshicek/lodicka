@@ -10,23 +10,35 @@
   <body>
     <canvas id="game"></canvas>
     <div id="hud" class="hidden">
-      <div id="lives"></div>
-      <div id="score">0</div>
-      <div id="speed-label">🐌</div>
+      <div class="hud-side hud-left">
+        <div class="player-tag">P1</div>
+        <div class="lives" id="lives-1"></div>
+        <div class="score" id="score-1">0</div>
+        <div class="speed" id="speed-1">🐌</div>
+      </div>
+      <div class="hud-side hud-right">
+        <div class="player-tag">P2</div>
+        <div class="lives" id="lives-2"></div>
+        <div class="score" id="score-2">0</div>
+        <div class="speed" id="speed-2">🐌</div>
+      </div>
     </div>
-    <div id="effect-label" class="hidden"></div>
+    <div id="effect-1" class="effect-label hidden"></div>
+    <div id="effect-2" class="effect-label hidden"></div>
     <div id="start-screen">
       <div class="title">⛵ LODICKA ⛵</div>
-      <div class="subtitle">Boat Adventure!</div>
+      <div class="subtitle">Boat Adventure — 2 Players!</div>
       <button id="start-btn">▶ PLAY!</button>
       <div class="instructions">
-        <p>⬅️ ➡️ Arrow keys or touch to steer</p>
+        <p><b>P1:</b> ⬅️ ➡️ Arrow keys</p>
+        <p><b>P2:</b> A — D keys</p>
         <p>Dodge bad stuff! Collect stars! ⭐</p>
       </div>
     </div>
     <div id="game-over-screen" class="hidden">
       <div class="title">🌊 SPLASH! 🌊</div>
-      <div id="final-score"></div>
+      <div id="winner"></div>
+      <div id="final-scores"></div>
       <div id="high-score"></div>
       <button id="restart-btn">🔄 Play Again!</button>
     </div>
