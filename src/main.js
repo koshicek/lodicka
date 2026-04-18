@@ -138,8 +138,8 @@ function createPlayer(id, controls) {
 }
 
 const players = [
-  createPlayer(1, { left: ['ArrowLeft'], right: ['ArrowRight'] }),
-  createPlayer(2, { left: ['a', 'A'], right: ['d', 'D'] }),
+  createPlayer(1, { left: ['a', 'A'], right: ['d', 'D'] }),
+  createPlayer(2, { left: ['ArrowLeft'], right: ['ArrowRight'] }),
 ];
 
 // ============================================================
